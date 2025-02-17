@@ -348,27 +348,42 @@ def delete_account():
 @app.route('/setup-admin', methods=['GET'])
 def setup_admin():
     # Check if admin already exists
-    if User.query.filter_by(role='admin').first():
-        flash('Admin account already exists', 'info')
-        return redirect(url_for('login'))
+    admin = User.query.filter_by(email='sahilkumar12484@gmail.com').first()
 
-    # Create admin user
-    admin = User(
-        username='sahil_457',
-        email='sahilkumar12484@gmail.com',
-        role='admin',
-        phone_number='+916205929482',
-        is_admin=True
-    )
-    admin.set_password('451457sa')
+    if admin:
+        # Update existing user to be admin if not already
+        if not admin.is_admin:
+            admin.is_admin = True
+            admin.role = 'admin'
+            admin.username = 'sahil_457'
+            admin.phone_number = '+916205929482'
+            admin.set_password('451457sa')
 
-    try:
-        db.session.add(admin)
-        db.session.commit()
-        flash('Admin account created successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error creating admin account: {str(e)}")
-        flash('Error creating admin account', 'error')
+            try:
+                db.session.commit()
+                flash('Existing user updated to admin successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                app.logger.error(f"Error updating admin account: {str(e)}")
+                flash('Error updating to admin account', 'error')
+    else:
+        # Create new admin user
+        admin = User(
+            username='sahil_457',
+            email='sahilkumar12484@gmail.com',
+            role='admin',
+            phone_number='+916205929482',
+            is_admin=True
+        )
+        admin.set_password('451457sa')
+
+        try:
+            db.session.add(admin)
+            db.session.commit()
+            flash('Admin account created successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error creating admin account: {str(e)}")
+            flash('Error creating admin account', 'error')
 
     return redirect(url_for('login'))
