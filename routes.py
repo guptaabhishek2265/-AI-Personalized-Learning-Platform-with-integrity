@@ -342,6 +342,16 @@ def delete_user(user_id):
         return redirect(url_for('dashboard_admin'))
 
     try:
+        # Delete all plagiarism results related to the user
+        PlagiarismResult.query.filter(
+            (PlagiarismResult.student1_id == user.id) | 
+            (PlagiarismResult.student2_id == user.id)
+        ).delete(synchronize_session=False)
+        
+        # Delete all submissions by the user
+        Submission.query.filter_by(student_id=user.id).delete()
+        
+        # Delete the user
         db.session.delete(user)
         db.session.commit()
         flash('User deleted successfully', 'success')
