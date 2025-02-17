@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .toISOString()
             .slice(0, 16);
         dueDateInput.min = localDateTime;
-        
+
         // If no value is set, default to 7 days from now
         if (!dueDateInput.value) {
             const defaultDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
@@ -83,3 +83,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function updateDueDate(event, assignmentId) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const modal = document.getElementById(`updateDueDate${assignmentId}`);
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+
+    fetch(`/assignment/${assignmentId}/update-due-date`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            modalInstance.hide();
+            alert('Due date updated successfully');
+            location.reload();
+        } else {
+            alert(data.error || 'Error updating due date');
+        }
+    })
+    .catch(error => {
+        alert('Error updating due date');
+        console.error('Error:', error);
+    });
+}

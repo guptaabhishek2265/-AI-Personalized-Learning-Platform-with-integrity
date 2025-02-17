@@ -143,15 +143,6 @@ def update_due_date(assignment_id):
         db.session.rollback()
         logging.error(f"Error updating due date: {str(e)}")
         return jsonify({'error': str(e)}), 500
-    
-    # Notify students about due date change
-    students = User.query.filter_by(role='student').all()
-    message = f"Due date for assignment '{assignment.title}' has been updated to {new_due_date.strftime('%Y-%m-%d %H:%M')}"
-    for student in students:
-        send_sms_notification(student.id, message)
-        
-    flash('Due date updated successfully!', 'success')
-    return redirect(url_for('dashboard_teacher'))
 
 @app.route('/dashboard/teacher')
 @login_required
