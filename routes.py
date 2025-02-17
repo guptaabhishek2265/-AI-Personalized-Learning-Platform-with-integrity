@@ -83,6 +83,7 @@ def register():
             role=role,
             phone_number=phone_number
         )
+        user.set_password(password)
         try:
             db.session.add(user)
             db.session.commit()
