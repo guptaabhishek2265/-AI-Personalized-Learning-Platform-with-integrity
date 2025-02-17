@@ -7,6 +7,11 @@ from app import app, db
 from models import User, Assignment, Submission, PlagiarismResult
 from plagiarism_checker import check_plagiarism, extract_text_from_file
 import logging
+from services.notification import (
+    notify_new_assignment,
+    notify_assignment_submission,
+    notify_plagiarism_check_complete
+)
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
@@ -57,10 +62,11 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         role = request.form.get('role')
+        phone_number = request.form.get('phone_number')
 
         app.logger.debug(f"Registration attempt - Username: {username}, Email: {email}, Role: {role}")
 
-        if not all([username, email, password, role]):
+        if not all([username, email, password, role, phone_number]):
             flash('Please fill in all fields', 'error')
             return render_template('register.html')
 
@@ -71,7 +77,8 @@ def register():
         user = User(
             username=username,
             email=email,
-            role=role
+            role=role,
+            phone_number=phone_number
         )
         user.set_password(password)
 
@@ -133,7 +140,7 @@ def create_assignment():
 
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     file.save(filepath)
-                    file_path = filename  # Store only the filename
+                    file_path = filename
                     logging.debug(f"File saved successfully at: {filepath}")
                 except Exception as e:
                     logging.error(f"Error saving file: {str(e)}")
@@ -149,6 +156,10 @@ def create_assignment():
         )
         db.session.add(assignment)
         db.session.commit()
+
+        # Send notifications to all students
+        notify_new_assignment(assignment)
+
         flash('Assignment created successfully!', 'success')
         return redirect(url_for('dashboard_teacher'))
 
@@ -191,10 +202,15 @@ def submit_assignment(assignment_id):
         db.session.add(submission)
         db.session.commit()
 
+        # Send notification to teacher about the submission
+        notify_assignment_submission(submission)
+
         # Check if all students have submitted
         submission_count = Submission.query.filter_by(assignment_id=assignment_id).count()
         if submission_count == 60 or datetime.utcnow() > assignment.due_date:
             check_plagiarism(assignment_id)
+            # Notify teacher that plagiarism check is complete
+            notify_plagiarism_check_complete(assignment)
 
         flash('Assignment submitted successfully!', 'success')
         return redirect(url_for('dashboard_student'))
