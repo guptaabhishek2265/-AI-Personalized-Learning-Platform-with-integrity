@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Login{% endblock %}
@@ -5,25 +6,38 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0">Login</h3>
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-header bg-transparent border-bottom border-light">
+                <h3 class="mb-0 text-center">Welcome Back!</h3>
             </div>
             <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <label for="email" class="form-label">
+                            <i data-feather="mail" class="me-2"></i>Email
+                        </label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i data-feather="lock" class="me-2"></i>Password
+                        </label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i data-feather="log-in" class="me-2"></i>Login
+                        </button>
+                    </div>
                 </form>
-                <p class="mt-3">
-                    Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
-                </p>
+                <div class="text-center mt-4">
+                    <p class="mb-0">
+                        Don't have an account? 
+                        <a href="{{ url_for('register') }}" class="text-primary text-decoration-none">
+                            Register here
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
