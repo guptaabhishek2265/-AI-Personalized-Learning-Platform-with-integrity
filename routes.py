@@ -21,6 +21,8 @@ def allowed_file(filename):
 @app.route('/')
 def index():
     if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('dashboard_admin'))
         if current_user.role == 'teacher':
             return redirect(url_for('dashboard_teacher'))
         return redirect(url_for('dashboard_student'))
