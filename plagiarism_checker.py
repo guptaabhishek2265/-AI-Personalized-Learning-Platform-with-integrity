@@ -63,6 +63,6 @@ def check_plagiarism(assignment_id):
     
     # Mark assignment as checked
     assignment = Assignment.query.get(assignment_id)
-    assignment.is_checked = True
-    
+    if assignment:  # Check if assignment is not None
+        assignment.is_checked = True
     db.session.commit()

@@ -1,5 +1,6 @@
 import os
 import logging
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -17,6 +18,8 @@ login_manager = LoginManager()
 
 # Create Flask app
 app = Flask(__name__)
+import routes
+import models
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_key")
 
 # Configure database
@@ -33,13 +36,11 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 # Initialize extensions with app
 db.init_app(app)
 login_manager.init_app(app)
-login_manager.login_view = "login"
+login_manager.login_view = "login" # Assuming "login" is the name of your login view function
 login_manager.login_message_category = "info"
 
 # Create tables
 with app.app_context():
-    import models
     db.create_all()
 
 # Import routes after app is created
-import routes
