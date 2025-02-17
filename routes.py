@@ -260,3 +260,115 @@ def download_assignment_file(assignment_id):
         logging.error(f"Error downloading file: {str(e)}")
         flash('Error downloading file', 'error')
         return redirect(url_for('dashboard_student'))
+
+@app.route('/dashboard/admin')
+@login_required
+def dashboard_admin():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    users = User.query.all()
+    return render_template('dashboard_admin.html', users=users)
+
+@app.route('/admin/add', methods=['POST'])
+@login_required
+def add_admin():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    phone_number = request.form.get('phone_number')
+
+    if User.query.filter_by(email=email).first():
+        flash('Email already registered', 'error')
+        return redirect(url_for('dashboard_admin'))
+
+    user = User(
+        username=username,
+        email=email,
+        role='admin',
+        phone_number=phone_number,
+        is_admin=True
+    )
+    user.set_password(password)
+
+    try:
+        db.session.add(user)
+        db.session.commit()
+        flash('Administrator added successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error adding admin: {str(e)}")
+        flash('Error adding administrator', 'error')
+
+    return redirect(url_for('dashboard_admin'))
+
+@app.route('/user/<int:user_id>/delete', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('Cannot delete your own account', 'error')
+        return redirect(url_for('dashboard_admin'))
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting user: {str(e)}")
+        flash('Error deleting user', 'error')
+
+    return redirect(url_for('dashboard_admin'))
+
+@app.route('/account/delete', methods=['POST'])
+@login_required
+def delete_account():
+    if current_user.is_admin:
+        flash('Admin accounts cannot be deleted through this method', 'error')
+        return redirect(url_for('dashboard_admin'))
+
+    try:
+        db.session.delete(current_user)
+        db.session.commit()
+        logout_user()
+        flash('Your account has been deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting account: {str(e)}")
+        flash('Error deleting account', 'error')
+
+    return redirect(url_for('index'))
+
+@app.route('/setup-admin', methods=['GET'])
+def setup_admin():
+    # Check if admin already exists
+    if User.query.filter_by(role='admin').first():
+        flash('Admin account already exists', 'info')
+        return redirect(url_for('login'))
+
+    # Create admin user
+    admin = User(
+        username='sahil_457',
+        email='sahilkumar12484@gmail.com',
+        role='admin',
+        phone_number='+916205929482',
+        is_admin=True
+    )
+    admin.set_password('451457sa')
+
+    try:
+        db.session.add(admin)
+        db.session.commit()
+        flash('Admin account created successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error creating admin account: {str(e)}")
+        flash('Error creating admin account', 'error')
+
+    return redirect(url_for('login'))
