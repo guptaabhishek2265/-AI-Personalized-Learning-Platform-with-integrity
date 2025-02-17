@@ -278,10 +278,19 @@ def download_assignment_file(assignment_id):
             flash('No file available for this assignment', 'error')
             return redirect(url_for('dashboard_student'))
             
-        file_path = os.path.join(os.path.abspath(app.config['UPLOAD_FOLDER']), assignment.file_path)
-        if not os.path.exists(file_path):
-            logging.error(f"File not found at path: {file_path}")
-            flash('File not found', 'error')
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], assignment.file_path)
+        abs_file_path = os.path.abspath(file_path)
+        logging.info(f"Looking for file at path: {abs_file_path}")
+        if not os.path.exists(abs_file_path):
+            # Try to find the file by name only
+            file_name = os.path.basename(assignment.file_path)
+            alt_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+            abs_alt_path = os.path.abspath(alt_path)
+            if os.path.exists(abs_alt_path):
+                file_path = alt_path
+            else:
+                logging.error(f"File not found at path: {abs_file_path} or {abs_alt_path}")
+                flash('File not found', 'error')
             return redirect(url_for('dashboard_student'))
 
         return send_file(
