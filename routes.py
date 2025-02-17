@@ -158,10 +158,11 @@ def create_assignment():
             if file and file.filename and allowed_file(file.filename, is_teacher=True):
                 try:
                     filename = secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                        os.makedirs(app.config['UPLOAD_FOLDER'])
+                    upload_dir = os.path.abspath(app.config['UPLOAD_FOLDER'])
+                    if not os.path.exists(upload_dir):
+                        os.makedirs(upload_dir)
 
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    filepath = os.path.join(upload_dir, filename)
                     file.save(filepath)
                     file_path = filename
                     logging.debug(f"File saved successfully at: {filepath}")
@@ -273,7 +274,11 @@ def download_assignment_file(assignment_id):
         return redirect(url_for('dashboard_student'))
 
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], assignment.file_path)
+        if not assignment.file_path:
+            flash('No file available for this assignment', 'error')
+            return redirect(url_for('dashboard_student'))
+            
+        file_path = os.path.join(os.path.abspath(app.config['UPLOAD_FOLDER']), assignment.file_path)
         if not os.path.exists(file_path):
             logging.error(f"File not found at path: {file_path}")
             flash('File not found', 'error')
