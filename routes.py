@@ -341,8 +341,8 @@ def delete_user(user_id):
         flash('Cannot delete your own account', 'error')
         return redirect(url_for('dashboard_admin'))
     
-    if user.is_admin:
-        flash('Cannot delete administrator accounts', 'error')
+    if user.is_admin or user.role == 'admin':
+        flash('Administrators cannot delete other administrators', 'error')
         return redirect(url_for('dashboard_admin'))
 
     try:
