@@ -1,7 +1,6 @@
+
 import os
 import logging
-import routes
-import models
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -34,11 +33,12 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 # Initialize extensions with app
 db.init_app(app)
 login_manager.init_app(app)
-login_manager.login_view = "login" # Assuming "login" is the name of your login view function
+login_manager.login_view = "login"
 login_manager.login_message_category = "info"
 
 # Create tables
 with app.app_context():
     db.create_all()
 
-# Import routes after app is created
+# Import routes after app and db are initialized
+from routes import *
