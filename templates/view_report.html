@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Plagiarism Report{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Plagiarism Report: {{ assignment.title }}</h2>
+        <p class="text-muted">Due date: {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Similarity Results</h4>
+            </div>
+            <div class="card-body">
+                {% if results %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Student 1</th>
+                                    <th>Student 2</th>
+                                    <th>Similarity Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>{{ students[result.student1_id] }}</td>
+                                    <td>{{ students[result.student2_id] }}</td>
+                                    <td>{{ "%.2f"|format(result.similarity_score * 100) }}%</td>
+                                    <td>
+                                        {% if result.similarity_score > 0.8 %}
+                                            <span class="badge bg-danger">High Similarity</span>
+                                        {% elif result.similarity_score > 0.5 %}
+                                            <span class="badge bg-warning">Moderate Similarity</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Low Similarity</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No plagiarism results available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Summary</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="similarityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('similarityChart').getContext('2d');
+    const results = {{ results|tojson }};
+    
+    // Process data for chart
+    const data = {
+        labels: ['High', 'Moderate', 'Low'],
+        datasets: [{
+            data: [
+                results.filter(r => r.similarity_score > 0.8).length,
+                results.filter(r => r.similarity_score > 0.5 && r.similarity_score <= 0.8).length,
+                results.filter(r => r.similarity_score <= 0.5).length
+            ],
+            backgroundColor: ['#dc3545', '#ffc107', '#198754']
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: 'Similarity Distribution'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
