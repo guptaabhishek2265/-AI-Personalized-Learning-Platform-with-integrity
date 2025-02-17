@@ -126,10 +126,19 @@ def create_assignment():
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                file_path = filepath
+                try:
+                    filename = secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+                    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                        os.makedirs(app.config['UPLOAD_FOLDER'])
+
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(filepath)
+                    file_path = filename  # Store only the filename
+                    logging.debug(f"File saved successfully at: {filepath}")
+                except Exception as e:
+                    logging.error(f"Error saving file: {str(e)}")
+                    flash('Error uploading file', 'error')
+                    return render_template('create_assignment.html')
 
         assignment = Assignment(
             title=request.form['title'],
@@ -219,6 +228,19 @@ def download_assignment_file(assignment_id):
         flash('No file available for this assignment', 'error')
         return redirect(url_for('dashboard_student'))
 
-    return send_file(assignment.file_path,
-                    as_attachment=True,
-                    download_name=os.path.basename(assignment.file_path))
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], assignment.file_path)
+        if not os.path.exists(file_path):
+            logging.error(f"File not found at path: {file_path}")
+            flash('File not found', 'error')
+            return redirect(url_for('dashboard_student'))
+
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=os.path.basename(assignment.file_path)
+        )
+    except Exception as e:
+        logging.error(f"Error downloading file: {str(e)}")
+        flash('Error downloading file', 'error')
+        return redirect(url_for('dashboard_student'))
