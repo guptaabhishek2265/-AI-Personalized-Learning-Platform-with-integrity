@@ -14,7 +14,11 @@ from services.notification import (
     send_sms_notification
 )
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
+TEACHER_ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'xlsx', 'csv', 'ipynb', 'c', 'cpp', 'py', 'zip', 'mp4'}
+STUDENT_ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'ipynb'}
+
+def allowed_file(filename, is_teacher=False):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in (TEACHER_ALLOWED_EXTENSIONS if is_teacher else STUDENT_ALLOWED_EXTENSIONS)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -154,7 +158,7 @@ def create_assignment():
         file_path = None
         if 'file' in request.files:
             file = request.files['file']
-            if file and file.filename and allowed_file(file.filename):
+            if file and file.filename and allowed_file(file.filename, is_teacher=True):
                 try:
                     filename = secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
                     if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -207,7 +211,7 @@ def submit_assignment(assignment_id):
         flash('No file selected', 'error')
         return redirect(url_for('dashboard_student'))
 
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename, is_teacher=False):
         filename = secure_filename(f"{assignment_id}_{current_user.id}_{file.filename}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
