@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from app import app, db
 from models import User, Assignment, Submission, PlagiarismResult
 from plagiarism_checker import check_plagiarism, extract_text_from_file
+import logging
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
@@ -23,26 +24,69 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = User.query.filter_by(email=request.form['email']).first()
-        if user and user.check_password(request.form['password']):
-            login_user(user)
-            return redirect(url_for('index'))
-        flash('Invalid email or password', 'error')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            flash('Please provide both email and password', 'error')
+            return render_template('login.html')
+
+        app.logger.debug(f"Login attempt for email: {email}")
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            app.logger.debug(f"User found with email: {email}")
+            if user.check_password(password):
+                login_user(user)
+                app.logger.debug(f"Login successful for user: {user.username}")
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('index'))
+            else:
+                app.logger.debug("Password check failed")
+                flash('Invalid password', 'error')
+        else:
+            app.logger.debug("User not found")
+            flash('Email not registered', 'error')
+
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role')
+
+        app.logger.debug(f"Registration attempt - Username: {username}, Email: {email}, Role: {role}")
+
+        if not all([username, email, password, role]):
+            flash('Please fill in all fields', 'error')
+            return render_template('register.html')
+
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'error')
+            return render_template('register.html')
+
         user = User(
-            username=request.form['username'],
-            email=request.form['email'],
-            role=request.form['role']
+            username=username,
+            email=email,
+            role=role
         )
-        user.set_password(request.form['password'])
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful!', 'success')
-        return redirect(url_for('login'))
+        user.set_password(password)
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            app.logger.debug(f"User registered successfully: {username}")
+            flash('Registration successful!', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Registration error: {str(e)}")
+            flash('An error occurred during registration', 'error')
+            return render_template('register.html')
+
     return render_template('register.html')
 
 @app.route('/logout')
@@ -66,7 +110,10 @@ def dashboard_student():
         return redirect(url_for('index'))
     assignments = Assignment.query.all()
     submissions = {s.assignment_id: s for s in Submission.query.filter_by(student_id=current_user.id).all()}
-    return render_template('dashboard_student.html', assignments=assignments, submissions=submissions)
+    return render_template('dashboard_student.html', 
+                         assignments=assignments, 
+                         submissions=submissions,
+                         now=datetime.utcnow())
 
 @app.route('/assignment/create', methods=['GET', 'POST'])
 @login_required

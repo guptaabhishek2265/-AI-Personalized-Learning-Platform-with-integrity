@@ -34,6 +34,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
+login_manager.login_message_category = "info"
 
 # Create tables
 with app.app_context():
