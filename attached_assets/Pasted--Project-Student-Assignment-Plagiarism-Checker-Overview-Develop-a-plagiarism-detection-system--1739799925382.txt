@@ -1,0 +1,78 @@
+🚀 Project: Student Assignment Plagiarism Checker
+📌 Overview
+Develop a plagiarism detection system for a 60-student batch where:
+
+Teachers upload assignments with a due date and can update the deadline if needed.
+Students submit assignments before the deadline.
+Plagiarism checking starts automatically either:
+When all 60 students submit OR
+After the due date (whichever comes first).
+Teachers get a report showing students who copied from each other.
+🔑 User Roles & Permissions
+1️⃣ Student
+✅ Upload assignment before the deadline.
+✅ View plagiarism report (if enabled by teacher).
+
+2️⃣ Teacher
+✅ Create assignments with a due date.
+✅ Update due date if needed.
+✅ View plagiarism report after the checker runs.
+
+3️⃣ System (Automated Process)
+✅ Start plagiarism detection when:
+
+All 60 students have submitted OR
+Due date is reached, even if some students haven't submitted.
+✅ Generate a plagiarism report for the teacher.
+🛠 Features & Functionalities
+🔹 Assignment Management (For Teachers)
+✅ Upload assignments with title, description, and due date.
+✅ Modify due date before the deadline.
+✅ View submission status of all 60 students.
+
+🔹 Secure File Submission (For Students)
+✅ Students submit DOCX, PDF, or TXT files.
+✅ Prevent resubmission after due date (unless allowed by teacher).
+
+🔹 Automatic Plagiarism Checking
+✅ Runs automatically:
+
+When all 60 students submit OR
+Immediately after the deadline.
+✅ Compares assignments within the same batch.
+✅ Uses TF-IDF + Cosine Similarity to check for copied content.
+✅ Highlights copied sections and shows percentage match.
+🔹 Plagiarism Report (For Teachers)
+✅ List of students who copied each other.
+✅ Color-coded similarity scores (e.g., 🔴 >80% match, 🟠 50-80%, 🟢 <50%).
+✅ Downloadable report with matched sections highlighted.
+
+🔹 Notifications & Reminders
+✅ Email/SMS reminder to students before due date.
+✅ Notify teacher when plagiarism check is complete.
+
+🖥 Tech Stack (Optimized for a 60-Student Batch)
+Backend: Python (Flask/Django) or Node.js (Express)
+Database: PostgreSQL / MySQL (stores assignments, users, and reports)
+Plagiarism Detection: TF-IDF + Cosine Similarity (fast for small datasets)
+Authentication: OAuth 2.0 (Google/Microsoft), Firebase Auth, JWT
+Frontend: React.js / Simple HTML-CSS
+
+📌 Workflow & Implementation Steps
+1️⃣ Assignment Creation & Submission
+Teacher uploads assignment & sets due date.
+Students submit files before the deadline.
+2️⃣ Automatic Plagiarism Detection
+Starts when all students submit OR after the due date.
+Compares each submission with all others.
+Flags copied sections & generates a similarity report.
+3️⃣ Report Generation & Teacher Review
+Teacher receives a report of copied students.
+Option to download the report as PDF.
+🚨 Challenges & Solutions
+🔹 Late Submissions? → Allow teachers to extend due date before running the check.
+🔹 False Positives? → Let teachers manually adjust similarity thresholds.
+🔹 Paraphrased Plagiarism? → Use AI-based NLP models (BERT, OpenAI embeddings).
+
+🎯 Expected Outcome
+A fully automated plagiarism checker that ensures fair submissions, alerts teachers to copied assignments, and simplifies academic integrity enforcement.
