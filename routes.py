@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -10,7 +10,8 @@ import logging
 from services.notification import (
     notify_new_assignment,
     notify_assignment_submission,
-    notify_plagiarism_check_complete
+    notify_plagiarism_check_complete,
+    send_sms_notification
 )
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
@@ -193,11 +194,6 @@ def submit_assignment(assignment_id):
     if current_user.role != 'student':
         return redirect(url_for('index'))
         
-    assignment = Assignment.query.get_or_404(assignment_id)
-    if datetime.utcnow() > assignment.due_date:
-        flash('Submission deadline has passed!', 'error')
-        return redirect(url_for('dashboard_student'))
-
     assignment = Assignment.query.get_or_404(assignment_id)
     if datetime.utcnow() > assignment.due_date:
         flash('Submission deadline has passed!', 'error')
