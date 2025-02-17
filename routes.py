@@ -20,9 +20,6 @@ STUDENT_ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'ipynb'}
 def allowed_file(filename, is_teacher=False):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in (TEACHER_ALLOWED_EXTENSIONS if is_teacher else STUDENT_ALLOWED_EXTENSIONS)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/')
 def index():
     if current_user.is_authenticated:
