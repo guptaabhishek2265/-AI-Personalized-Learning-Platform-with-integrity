@@ -22,8 +22,10 @@
                             <thead>
                                 <tr>
                                     <th>Title</th>
+                                    <th>Description</th>
                                     <th>Due Date</th>
                                     <th>Status</th>
+                                    <th>File</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -31,6 +33,7 @@
                                 {% for assignment in assignments %}
                                 <tr>
                                     <td>{{ assignment.title }}</td>
+                                    <td>{{ assignment.description }}</td>
                                     <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>
                                         {% if assignment.id in submissions %}
@@ -39,6 +42,16 @@
                                             <span class="badge bg-danger">Overdue</span>
                                         {% else %}
                                             <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assignment.file_path %}
+                                            <a href="{{ url_for('download_assignment_file', assignment_id=assignment.id) }}" 
+                                               class="btn btn-sm btn-info">
+                                                <i data-feather="download"></i> Download
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No file</span>
                                         {% endif %}
                                     </td>
                                     <td>

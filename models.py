@@ -31,6 +31,7 @@ class Assignment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_checked = db.Column(db.Boolean, default=False)
+    file_path = db.Column(db.String(500))  # Path to the assignment file
 
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
