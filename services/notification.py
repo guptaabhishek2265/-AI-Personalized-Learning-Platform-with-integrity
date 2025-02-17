@@ -61,3 +61,22 @@ def notify_plagiarism_check_complete(assignment):
     """Notify teacher when plagiarism check is complete"""
     message = f"Plagiarism check completed for assignment: {assignment.title}"
     send_sms_notification(assignment.teacher_id, message)
+def check_approaching_deadlines():
+    """Check for assignments due in 24 hours and notify students"""
+    now = datetime.utcnow()
+    tomorrow = now + timedelta(days=1)
+    
+    # Find assignments due in the next 24 hours
+    approaching_assignments = Assignment.query.filter(
+        Assignment.due_date > now,
+        Assignment.due_date <= tomorrow
+    ).all()
+    
+    students = User.query.filter_by(role='student').all()
+    
+    for assignment in approaching_assignments:
+        message = f"REMINDER: Assignment '{assignment.title}' is due in less than 24 hours ({assignment.due_date.strftime('%Y-%m-%d %H:%M')})"
+        for student in students:
+            # Check if student hasn't submitted yet
+            if not Submission.query.filter_by(assignment_id=assignment.id, student_id=student.id).first():
+                send_sms_notification(student.id, message)

@@ -47,6 +47,36 @@
                                            class="btn btn-sm btn-info">
                                             <i data-feather="file-text"></i> View Report
                                         </a>
+                                        <button type="button" class="btn btn-sm btn-warning" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#updateDueDate{{ assignment.id }}">
+                                            <i data-feather="clock"></i> Update Due Date
+                                        </button>
+                                        
+                                        <!-- Due Date Update Modal -->
+                                        <div class="modal fade" id="updateDueDate{{ assignment.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Update Due Date</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form action="{{ url_for('update_due_date', assignment_id=assignment.id) }}" method="POST">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">New Due Date</label>
+                                                                <input type="datetime-local" name="new_due_date" 
+                                                                       class="form-control" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary">Update</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
