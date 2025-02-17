@@ -340,6 +340,10 @@ def delete_user(user_id):
     if user.id == current_user.id:
         flash('Cannot delete your own account', 'error')
         return redirect(url_for('dashboard_admin'))
+    
+    if user.is_admin:
+        flash('Cannot delete administrator accounts', 'error')
+        return redirect(url_for('dashboard_admin'))
 
     try:
         # Delete all plagiarism results related to the user
