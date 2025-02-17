@@ -52,7 +52,7 @@
                                                 data-bs-target="#updateDueDate{{ assignment.id }}">
                                             <i data-feather="clock"></i> Update Due Date
                                         </button>
-                                        
+
                                         <!-- Due Date Update Modal -->
                                         <div class="modal fade" id="updateDueDate{{ assignment.id }}" tabindex="-1">
                                             <div class="modal-dialog">
@@ -61,7 +61,7 @@
                                                         <h5 class="modal-title">Update Due Date</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                     </div>
-                                                    <form action="{{ url_for('update_due_date', assignment_id=assignment.id) }}" method="POST">
+                                                    <form id="dueDateForm{{ assignment.id }}" onsubmit="updateDueDate(event, {{ assignment.id }})">
                                                         <div class="modal-body">
                                                             <div class="mb-3">
                                                                 <label class="form-label">New Due Date</label>
@@ -74,6 +74,31 @@
                                                             <button type="submit" class="btn btn-primary">Update</button>
                                                         </div>
                                                     </form>
+                                                    <script>
+                                                    function updateDueDate(event, assignmentId) {
+                                                        event.preventDefault();
+                                                        const form = event.target;
+                                                        const formData = new FormData(form);
+
+                                                        fetch(`/assignment/${assignmentId}/update-due-date`, {
+                                                            method: 'POST',
+                                                            body: formData
+                                                        })
+                                                        .then(response => response.json())
+                                                        .then(data => {
+                                                            if (data.success) {
+                                                                alert('Due date updated successfully');
+                                                                location.reload();
+                                                            } else {
+                                                                alert(data.error || 'Error updating due date');
+                                                            }
+                                                        })
+                                                        .catch(error => {
+                                                            alert('Error updating due date');
+                                                            console.error('Error:', error);
+                                                        });
+                                                    }
+                                                    </script>
                                                 </div>
                                             </div>
                                         </div>

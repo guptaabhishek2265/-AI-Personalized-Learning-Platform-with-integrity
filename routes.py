@@ -14,11 +14,10 @@ from services.notification import (
     send_sms_notification
 )
 
-TEACHER_ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'xlsx', 'csv', 'ipynb', 'c', 'cpp', 'py', 'zip', 'mp4'}
-STUDENT_ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'ipynb'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'xlsx', 'csv', 'ipynb', 'c', 'cpp', 'py', 'zip', 'mp4', 'h', 'java', 'js', 'html', 'css', 'php', 'xml', 'json'}
 
 def allowed_file(filename, is_teacher=False):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in (TEACHER_ALLOWED_EXTENSIONS if is_teacher else STUDENT_ALLOWED_EXTENSIONS)
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -105,16 +104,45 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/assignment/<int:assignment_id>/preview')
+@login_required
+def preview_file(assignment_id):
+    assignment = Assignment.query.get_or_404(assignment_id)
+    if not assignment.file_path:
+        flash('No file available for this assignment', 'error')
+        return redirect(url_for('dashboard_student'))
+
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], assignment.file_path)
+        return send_file(file_path)
+    except Exception as e:
+        logging.error(f"Error previewing file: {str(e)}")
+        flash('Error previewing file', 'error')
+        return redirect(url_for('dashboard_student'))
+
 @app.route('/assignment/<int:assignment_id>/update-due-date', methods=['POST'])
 @login_required
 def update_due_date(assignment_id):
     if current_user.role != 'teacher':
-        return redirect(url_for('index'))
+        return jsonify({'error': 'Unauthorized'}), 403
         
-    assignment = Assignment.query.get_or_404(assignment_id)
-    new_due_date = datetime.strptime(request.form['new_due_date'], '%Y-%m-%dT%H:%M')
-    assignment.due_date = new_due_date
-    db.session.commit()
+    try:
+        assignment = Assignment.query.get_or_404(assignment_id)
+        new_due_date = datetime.strptime(request.form['new_due_date'], '%Y-%m-%dT%H:%M')
+        assignment.due_date = new_due_date
+        db.session.commit()
+        
+        # Notify students about due date change
+        students = User.query.filter_by(role='student').all()
+        message = f"Due date for assignment '{assignment.title}' has been updated to {new_due_date.strftime('%Y-%m-%d %H:%M')}"
+        for student in students:
+            send_sms_notification(student.id, message)
+            
+        return jsonify({'success': True, 'message': 'Due date updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating due date: {str(e)}")
+        return jsonify({'error': str(e)}), 500
     
     # Notify students about due date change
     students = User.query.filter_by(role='student').all()

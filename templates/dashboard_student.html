@@ -46,10 +46,16 @@
                                     </td>
                                     <td>
                                         {% if assignment.file_path %}
-                                            <a href="{{ url_for('download_assignment_file', assignment_id=assignment.id) }}" 
-                                               class="btn btn-sm btn-info">
-                                                <i data-feather="download"></i> Download
-                                            </a>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('preview_file', assignment_id=assignment.id) }}" 
+                                                   class="btn btn-sm btn-primary" target="_blank">
+                                                    <i data-feather="eye"></i> View
+                                                </a>
+                                                <a href="{{ url_for('download_assignment_file', assignment_id=assignment.id) }}" 
+                                                   class="btn btn-sm btn-info">
+                                                    <i data-feather="download"></i> Download
+                                                </a>
+                                            </div>
                                         {% else %}
                                             <span class="text-muted">No file</span>
                                         {% endif %}
