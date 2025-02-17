@@ -227,6 +227,11 @@ def view_report(assignment_id):
         return redirect(url_for('index'))
 
     assignment = Assignment.query.get_or_404(assignment_id)
+    
+    # Check if past due date and not checked yet
+    if datetime.utcnow() > assignment.due_date and not assignment.is_checked:
+        check_plagiarism(assignment_id)
+        
     results = PlagiarismResult.query.filter_by(assignment_id=assignment_id).all()
 
     # Get student information for the report

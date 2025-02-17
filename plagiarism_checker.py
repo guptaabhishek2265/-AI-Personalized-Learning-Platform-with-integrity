@@ -45,9 +45,9 @@ def check_plagiarism(assignment_id):
     # Create plagiarism results
     for i in range(len(submissions)):
         for j in range(i + 1, len(submissions)):
-            similarity_score = similarity_matrix[i][j]
-            
-            if similarity_score > 0.3:  # Threshold for similarity
+            try:
+                similarity_score = similarity_matrix[i][j]
+                # Store all results, even low similarity ones
                 result = PlagiarismResult(
                     assignment_id=assignment_id,
                     student1_id=submissions[i].student_id,
@@ -56,6 +56,10 @@ def check_plagiarism(assignment_id):
                     matched_content="Similarity detected in submission"
                 )
                 db.session.add(result)
+                logging.info(f"Created plagiarism result with score: {similarity_score}")
+            except Exception as e:
+                logging.error(f"Error creating plagiarism result: {str(e)}")
+                continue
     
     # Mark assignment as checked
     assignment = Assignment.query.get(assignment_id)
