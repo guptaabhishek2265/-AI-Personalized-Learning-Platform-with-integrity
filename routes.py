@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from app import app, db
+from app import db,app
 from models import User, Assignment, Submission, PlagiarismResult
 from plagiarism_checker import check_plagiarism, extract_text_from_file
 import logging
@@ -176,7 +176,7 @@ def create_assignment():
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename, is_teacher=True):
                 try:
-                    filename = secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+                    filename= secure_filename(f"assignment_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{file.filename}")
                     upload_dir = os.path.abspath(app.config['UPLOAD_FOLDER'])
                     if not os.path.exists(upload_dir):
                         os.makedirs(upload_dir)

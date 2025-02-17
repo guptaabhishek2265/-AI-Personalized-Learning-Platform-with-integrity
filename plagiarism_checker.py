@@ -2,7 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from models import Submission, PlagiarismResult, Assignment
-from app import db
+from app import db,app
 import PyPDF2
 import docx
 import logging

@@ -1,7 +1,8 @@
 import os
 import logging
 from twilio.rest import Client
-from models import User
+from datetime import datetime, timedelta
+from models import Assignment,Submission,User
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -54,26 +55,26 @@ def notify_assignment_submission(submission):
     assignment = submission.assignment
     student = User.query.get(submission.student_id)
     message = f"Student {student.username} has submitted the assignment: {assignment.title}"
-    
     send_sms_notification(assignment.teacher_id, message)
 
 def notify_plagiarism_check_complete(assignment):
     """Notify teacher when plagiarism check is complete"""
     message = f"Plagiarism check completed for assignment: {assignment.title}"
     send_sms_notification(assignment.teacher_id, message)
-def check_approaching_deadlines():
-    """Check for assignments due in 24 hours and notify students"""
-    now = datetime.utcnow()
-    tomorrow = now + timedelta(days=1)
     
+def check_approaching_deadlines():
+    """Check for assignments due in 24 hours and notify students"""    
+    now = datetime.utcnow()    
+    tomorrow = now + timedelta(days=1)
+
     # Find assignments due in the next 24 hours
     approaching_assignments = Assignment.query.filter(
         Assignment.due_date > now,
         Assignment.due_date <= tomorrow
     ).all()
-    
+
     students = User.query.filter_by(role='student').all()
-    
+
     for assignment in approaching_assignments:
         message = f"REMINDER: Assignment '{assignment.title}' is due in less than 24 hours ({assignment.due_date.strftime('%Y-%m-%d %H:%M')})"
         for student in students:

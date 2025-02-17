@@ -1,6 +1,7 @@
 import os
 import logging
-
+import routes
+import models
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -15,11 +16,8 @@ class Base(DeclarativeBase):
 # Initialize extensions
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
-
 # Create Flask app
 app = Flask(__name__)
-import routes
-import models
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_key")
 
 # Configure database
