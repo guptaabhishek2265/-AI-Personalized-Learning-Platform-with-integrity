@@ -387,10 +387,14 @@ def delete_user(user_id):
             (getattr(PlagiarismResult, "student2_id") == user.id)
         ).delete(synchronize_session=False)
         
+        # Delete all submissions by the user if they're a student
+        if user.role == 'student':
+            Submission.query.filter_by(student_id=user.id).delete()
         
-        # Delete all submissions by the user
-        Submission.query.filter_by(student_id=user.id).delete()
-        
+        # Delete all assignments if they're a teacher
+        if user.role == 'teacher':
+            Assignment.query.filter_by(teacher_id=user.id).delete()
+            
         # Delete the user
         db.session.delete(user)
         db.session.commit()
