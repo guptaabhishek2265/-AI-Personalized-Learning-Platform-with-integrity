@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -382,10 +382,11 @@ def delete_user(user_id):
 
     try:
         # Delete all plagiarism results related to the user
-        PlagiarismResult.query.filter(
-            (PlagiarismResult.student1_id == user.id) | 
-            (PlagiarismResult.student2_id == user.id)
+        db.session.query(PlagiarismResult).filter(
+            (getattr(PlagiarismResult, "student1_id") == user.id) |
+            (getattr(PlagiarismResult, "student2_id") == user.id)
         ).delete(synchronize_session=False)
+        
         
         # Delete all submissions by the user
         Submission.query.filter_by(student_id=user.id).delete()
