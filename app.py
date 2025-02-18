@@ -41,3 +41,4 @@ with app.app_context():
     db.create_all()
 
 # Import routes after app and db are initialized
+from routes import *
