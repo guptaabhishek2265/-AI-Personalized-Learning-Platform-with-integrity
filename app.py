@@ -38,6 +38,7 @@ login_manager.login_message_category = "info"
 
 # Create tables
 with app.app_context():
+    db.drop_all()
     db.create_all()
 
 # Import routes after app and db are initialized

@@ -37,7 +37,7 @@ class Assignment(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     due_date = db.Column(db.DateTime, nullable=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     file_path = db.Column(db.String(255)) # Add the file path column
     is_checked = db.Column(db.Boolean, default=False) # For plagiarism check status
 
