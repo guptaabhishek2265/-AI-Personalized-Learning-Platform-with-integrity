@@ -1,0 +1,16 @@
+.env
+uploads
+check_tz.py
+migrate.py
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.vscode/
+*.replit
+instance/
+migrations/
+uploads/
+attached_assets/
+results/
+.DS_Store

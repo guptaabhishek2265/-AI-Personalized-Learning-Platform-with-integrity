@@ -20,99 +20,126 @@
             </div>
             <div class="card-body">
                 {% if assignments %}
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assignment in assignments %}
-                                <tr>
-                                    <td>{{ assignment.title }}</td>
-                                    <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                                    <td>
-                                        {% if assignment.is_checked %}
-                                            <span class="badge bg-success">Checked</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{{ url_for('view_report', assignment_id=assignment.id) }}" 
-                                           class="btn btn-sm btn-info">
-                                            <i data-feather="file-text"></i> View Report
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-warning" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#updateDueDate{{ assignment.id }}">
-                                            <i data-feather="clock"></i> Update Due Date
-                                        </button>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>{{ assignment.title }}</td>
+                                <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if assignment.is_checked %}
+                                    <span class="badge bg-success">Checked</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_submissions', assignment_id=assignment.id) }}"
+                                        class="btn btn-sm btn-success">
+                                        <i data-feather="eye"></i> View Submissions
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_report', assignment_id=assignment.id) }}"
+                                        class="btn btn-sm btn-info">
+                                        <i data-feather="file-text"></i> View Report
+                                    </a>
 
-                                        <!-- Due Date Update Modal -->
-                                        <div class="modal fade" id="updateDueDate{{ assignment.id }}" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Update Due Date</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <form id="dueDateForm{{ assignment.id }}" onsubmit="updateDueDate(event, {{ assignment.id }})">
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">New Due Date</label>
-                                                                <input type="datetime-local" name="new_due_date" 
-                                                                       class="form-control" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                            <button type="submit" class="btn btn-primary">Update</button>
-                                                        </div>
-                                                    </form>
-                                                    <script>
-                                                    function updateDueDate(event, assignmentId) {
-                                                        event.preventDefault();
-                                                        const form = event.target;
-                                                        const formData = new FormData(form);
+                                    <!-- Button to open the modal -->
+                                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                        data-bs-target="#updateDueDate{{ assignment.id }}">
+                                        <i data-feather="clock"></i> Update Due Date
+                                    </button>
 
-                                                        fetch(`/assignment/${assignmentId}/update-due-date`, {
-                                                            method: 'POST',
-                                                            body: formData
-                                                        })
-                                                        .then(response => response.json())
-                                                        .then(data => {
-                                                            if (data.success) {
-                                                                alert('Due date updated successfully');
-                                                                location.reload();
-                                                            } else {
-                                                                alert(data.error || 'Error updating due date');
-                                                            }
-                                                        })
-                                                        .catch(error => {
-                                                            alert('Error updating due date');
-                                                            console.error('Error:', error);
-                                                        });
-                                                    }
-                                                    </script>
+                                    <!-- Due Date Update Modal -->
+                                    <div class="modal fade" id="updateDueDate{{ assignment.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Update Due Date</h5>
+                                                    <button type="button" class="btn-close"
+                                                        data-bs-dismiss="modal"></button>
                                                 </div>
+                                                <form id="dueDateForm{{ assignment.id }}"
+                                                    onsubmit="updateDueDate(event, {{ assignment.id }}); return false;">
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">New Due Date</label>
+                                                            <input type="datetime-local" name="new_due_date"
+                                                                aria-label="new_due_date" class="form-control" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Update</button>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                    <p class="text-muted">No assignments created yet.</p>
+                <p class="text-muted">No assignments created yet.</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function updateDueDate(event, assignmentId) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        // Log the request for debugging
+        console.log('Updating due date for assignment:', assignmentId);
+        console.log('Form data:', Object.fromEntries(formData));
+
+        fetch(`/assignment/${assignmentId}/update-due-date`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams(formData) // Convert FormData to URL-encoded
+        })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    alert('Due date updated successfully');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`updateDueDate${assignmentId}`));
+                    modal.hide(); // Close the modal
+                    location.reload(); // Refresh the page
+                } else {
+                    alert(data.error || 'Error updating due date');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('Error updating due date: ' + error.message);
+            });
+    }
+</script>
 {% endblock %}

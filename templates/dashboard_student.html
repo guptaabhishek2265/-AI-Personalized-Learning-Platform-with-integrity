@@ -23,7 +23,7 @@
                                 <tr>
                                     <th>Title</th>
                                     <th>Description</th>
-                                    <th>Due Date</th>
+                                    <th>Due Date (IST)</th>
                                     <th>Status</th>
                                     <th>File</th>
                                     <th>Action</th>
@@ -34,7 +34,7 @@
                                 <tr>
                                     <td>{{ assignment.title }}</td>
                                     <td>{{ assignment.description }}</td>
-                                    <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M IST') }}</td>
                                     <td>
                                         {% if assignment.id in submissions %}
                                             <span class="badge bg-success">Submitted</span>
@@ -47,7 +47,7 @@
                                     <td>
                                         {% if assignment.file_path %}
                                             <div class="btn-group">
-                                                <a href="{{ url_for('preview_file', assignment_id=assignment.id) }}" 
+                                                <a href="{{ url_for('preview_assignment', assignment_id=assignment.id) }}" 
                                                    class="btn btn-sm btn-primary" target="_blank">
                                                     <i data-feather="eye"></i> View
                                                 </a>
@@ -65,7 +65,7 @@
                                             <form method="POST" action="{{ url_for('submit_assignment', assignment_id=assignment.id) }}" 
                                                   enctype="multipart/form-data" class="d-inline">
                                                 <div class="input-group">
-                                                    <input type="file" class="form-control form-control-sm" name="file" required>
+                                                    <input type="file" class="form-control form-control-sm" aria-label="NA" name="file" required>
                                                     <button type="submit" class="btn btn-sm btn-primary">
                                                         <i data-feather="upload"></i> Submit
                                                     </button>

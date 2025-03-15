@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Your Attendance Summary</h2>
+{% if attendance_summary %}
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Subject</th>
+      <th>Total Classes</th>
+      <th>Attended Classes</th>
+      <th>Attendance Percentage</th>
+      <th>Meets 75% Criterion?</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for summary in attendance_summary %}
+    <tr>
+      <td>{{ summary.subject.name }}</td>
+      <td>{{ summary.total_classes }}</td>
+      <td>{{ summary.attended_classes }}</td>
+      <td>{{ summary.percentage }}%</td>
+      <td>
+        {% if summary.meets_criterion %}
+        <span class="text-success">Yes</span>
+        {% else %}
+        <span class="text-danger">No</span>
+        {% endif %}
+      </td>
+      <td>
+        <form action="{{ url_for('remove_subject', subject_id=summary.subject.id) }}" method="POST" class="inline-form">
+          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove {{ summary.subject.name }}? This will delete all associated attendance records.')">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No subjects or attendance records found. Add a subject to start tracking!</p>
+{% endif %}
+<a href="{{ url_for('add_subject') }}" class="btn btn-primary">Add Subject</a>
+<a href="{{ url_for('mark_attendance') }}" class="btn btn-primary">Mark Attendance</a>
+{% endblock %}

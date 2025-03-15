@@ -1,68 +1,124 @@
-
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Plagiarism Checker - {% block title %}{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
     <style>
         body {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
         }
+
         .navbar {
             background: rgba(33, 37, 41, 0.95) !important;
-            backdrop-filter: blur(10px);
+
+            .element {
+                background-color: rgba(255, 255, 255, 0.3);
+                /* Partially transparent background */
+                -webkit-backdrop-filter: blur(10px);
+                /* Safari 9+ and iOS Safari 9+ */
+                backdrop-filter: blur(10px);
+                /* Standard syntax for modern browsers */
+            }
+
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .card {
             background: rgba(33, 37, 41, 0.8);
-            backdrop-filter: blur(10px);
+
+            .element {
+                background-color: rgba(255, 255, 255, 0.3);
+                /* Partially transparent background */
+                -webkit-backdrop-filter: blur(10px);
+                /* Safari 9+ and iOS Safari 9+ */
+                backdrop-filter: blur(10px);
+                /* Standard syntax for modern browsers */
+            }
+
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             transition: transform 0.3s ease;
         }
-        .card:hover {
-            transform: translateY(-5px);
-        }
+
         .btn {
             border-radius: 8px;
             padding: 8px 20px;
             transition: all 0.3s ease;
         }
+
         .btn-primary {
             background: linear-gradient(45deg, #007bff, #00bfff);
             border: none;
         }
+
         .btn-primary:hover {
             background: linear-gradient(45deg, #00bfff, #007bff);
             transform: translateY(-2px);
         }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.8;
+            /* Ensure hover looks active */
+            cursor: pointer;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.65;
+            /* Bootstrap default */
+            cursor: not-allowed;
+        }
+
         .alert {
             border-radius: 10px;
             border: none;
             animation: fadeInDown 0.5s ease;
         }
+
         .form-control {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
         }
+
         .form-control:focus {
             background: rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
         }
+
         .navbar-brand i {
             margin-right: 8px;
             vertical-align: middle;
         }
+
         .dropdown-menu {
             background: rgba(33, 37, 41, 0.95);
-            backdrop-filter: blur(10px);
+
+            .element {
+                background-color: rgba(255, 255, 255, 0.3);
+                /* Partially transparent background */
+                -webkit-backdrop-filter: blur(10px);
+                /* Safari 9+ and iOS Safari 9+ */
+                backdrop-filter: blur(10px);
+                /* Standard syntax for modern browsers */
+            }
+
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        .modal-content {
+            height: auto;
+            /* or a fixed height if possible */
+            overflow-y: auto;
+            /* add scroll if content overflows */
+        }
+
+
         .table {
             background: rgba(33, 37, 41, 0.8);
             border-radius: 15px;
@@ -71,74 +127,88 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand animate__animated animate__fadeIn" href="{{ url_for('index') }}">
                 <i data-feather="shield"></i> Plagiarism Checker
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            {% if current_user.is_admin %}
-                                <a class="nav-link" href="{{ url_for('dashboard_admin') }}">Admin Dashboard</a>
-                            {% else %}
-                                <a class="nav-link" href="{{ url_for('dashboard_teacher' if current_user.role == 'teacher' else 'dashboard_student') }}">Dashboard</a>
-                            {% endif %}
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" data-bs-toggle="dropdown">
-                                <i data-feather="user"></i> {{ current_user.username }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                {% if not current_user.is_admin %}
-                                    <li>
-                                        <form action="{{ url_for('delete_account') }}" method="POST" 
-                                              onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i data-feather="trash-2"></i> Delete Account
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                {% endif %}
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
-                                        <i data-feather="log-out"></i> Logout
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    {%- if current_user.is_authenticated -%}
+                    <li class="nav-item">
+                        {%- if current_user.is_admin -%}
+                        <a class="nav-link" href="{{ url_for('dashboard_admin') }}">Admin Dashboard</a>
+                        {%- else -%}
+                        <a class="nav-link"
+                            href="{{ url_for('dashboard_teacher' if current_user.role == 'teacher' else 'dashboard_student') }}">
+                            Dashboard
+                        </a>
+                        {%- endif -%}
+                    </li>
+                    {% if current_user.is_authenticated and current_user.role == 'student' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('view_attendance') }}">My Attendance</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                        <a class="nav-link" href="{{ url_for('mark_attendance') }}">Mark Attendance</a>
                         </li>
+                        <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('add_subject') }}">Add Subject</a>
+                    </li>
                     {% endif %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" data-bs-toggle="dropdown">
+                            <i data-feather="user"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {%- if not current_user.is_admin -%}
+                            <li>
+                                <form action="{{ url_for('delete_account') }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i data-feather="trash-2"></i> Delete Account
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider" />
+                            </li>
+                            {%- endif -%}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i data-feather="log-out"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {%- else -%}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                    </li>
+                    {%- endif -%}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container" style="margin-top: 80px">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show animate__animated animate__fadeInDown">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
+    <div class="container content-wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div
+            class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show animate__animated animate__fadeInDown">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close alert"></button>
+        </div>
+        {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -148,4 +218,5 @@
     </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
