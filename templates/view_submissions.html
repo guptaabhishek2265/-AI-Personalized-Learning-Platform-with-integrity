@@ -1,42 +1,44 @@
-{% extends "base.html" %}
-
-{% block title %}Submissions for {{ assignment.title }}{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Submissions for {{ assignment.title
+}}{% endblock %} {% block content %}
 <h2>Submissions for {{ assignment.title }}</h2>
 
 {% if submissions %}
 <table class="table">
-    <thead>
-        <tr>
-            <th>Student Name</th>
-            <th>Submitted At</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for submission in submissions %}
-        <tr>
-            <td>{{ submission.student.username }}</td>
-            <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>
-                {% if submission.is_late %}
-                    <span class="badge bg-danger">Late</span>
-                {% else %}
-                    <span class="badge bg-success">On Time</span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="{{ url_for('preview_submission', assignment_id=submission.assignment_id, submission_id=submission.id) }}"
-                   class="btn btn-primary btn-sm">Preview</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th>Student Name</th>
+      <th>Submitted At</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for submission in submissions %}
+    <tr>
+      <td>{{ submission.student.username }}</td>
+      <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>
+        {% if submission.is_late %}
+        <span class="badge bg-danger">Late</span>
+        {% else %}
+        <span class="badge bg-success">On Time</span>
+        {% endif %}
+      </td>
+      <td>
+        <a
+          href="{{ url_for('main.preview_submission', assignment_id=submission.assignment_id, submission_id=submission.id) }}"
+          class="btn btn-primary btn-sm"
+          >Preview</a
+        >
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% else %}
 <p>No submissions yet.</p>
 {% endif %}
 
-<a href="{{ url_for('dashboard_teacher') }}" class="btn btn-secondary">Back to Dashboard</a>
+<a href="{{ url_for('main.dashboard_teacher') }}" class="btn btn-secondary"
+  >Back to Dashboard</a
+>
 {% endblock %}

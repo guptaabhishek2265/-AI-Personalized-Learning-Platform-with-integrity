@@ -1,18 +1,22 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, login_manager
+from extensions import db, login_manager
+
 IST = timezone('Asia/Kolkata')
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+
+# Move user_loader to routes.py since it's related to authentication
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     student = db.relationship('User', backref=db.backref('subjects', lazy=True))
+
 class ClassRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
@@ -24,6 +28,7 @@ class ClassRecord(db.Model):
     __table_args__ = (
         db.UniqueConstraint('subject_id', 'date', name='unique_subject_date'),
     )
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -98,3 +103,65 @@ class PlagiarismResult(db.Model):
         self.matched_content = matched_content
         self.report_path=report_path
         self.graph_path=graph_path
+
+class Challenge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    total_days = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(IST))
+    end_date = db.Column(db.DateTime(timezone=True), nullable=False)
+    completed_days = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(IST))
+    
+    # Relationship with User model
+    student = db.relationship('User', backref=db.backref('challenges', lazy=True))
+    
+    def __init__(self, student_id, name, total_days):
+        self.student_id = student_id
+        self.name = name
+        self.total_days = min(total_days, 30)  # Ensure max 30 days
+        self.start_date = datetime.now(IST)
+        self.end_date = self.start_date + timedelta(days=self.total_days)
+        
+    def get_progress(self):
+        """Calculate challenge progress percentage"""
+        return (self.completed_days / self.total_days) * 100 if self.total_days > 0 else 0
+        
+    def get_remaining_days(self):
+        """Get number of days remaining in the challenge"""
+        now = datetime.now(IST)
+        if now > self.end_date:
+            return 0
+        return (self.end_date - now).days
+        
+    def is_completed(self):
+        """Check if challenge is completed"""
+        return self.completed_days >= self.total_days
+        
+    def get_streak(self):
+        """Calculate current streak"""
+        # This will be implemented when we add daily check-ins
+        return 0
+
+class ChallengeDay(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    day_number = db.Column(db.Integer, nullable=False)
+    is_completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime(timezone=True))
+    
+    # Relationship with Challenge model
+    challenge = db.relationship('Challenge', backref=db.backref('days', lazy=True))
+    
+    def __init__(self, challenge_id, day_number):
+        self.challenge_id = challenge_id
+        self.day_number = day_number
+        
+    def mark_completed(self):
+        """Mark the day as completed"""
+        self.is_completed = True
+        self.completed_at = datetime.now(IST)
+        # Update challenge completed days
+        self.challenge.completed_days += 1

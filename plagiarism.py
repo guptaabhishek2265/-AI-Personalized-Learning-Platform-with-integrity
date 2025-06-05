@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 import docx
 import numpy as np
-from werkzeug.utils import secure_filename,safe_join
+from werkzeug.utils import secure_filename, safe_join
 import textdistance
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,10 +17,12 @@ from pytz import timezone
 from services.notification import (
     notify_plagiarism_report
 )
+from itertools import combinations
+
 IST = timezone('Asia/Kolkata')
 
 # 🔑 API Configuration
-API_KEY = "XsFNTlH-zhhLEjKd7898s_9rpFe7ozxTdYs_rE-rmGU"  # Replace with your actual API key
+API_KEY = "u8qY3SzXNxkg2AycVM3dOyP_t_vdpljhl5o7WBTl030"  # Replace with your actual API key
 BASE_URL = "https://llmwhisperer-api.us-central.unstract.com/api/v2"
 
 def upload_file(file_path):
@@ -124,42 +126,176 @@ def calculate_similarity(text1, text2):
 
     return round(cosine_sim, 2), round(jaccard_sim, 2), round(levenshtein_sim, 2)
 
+def register_all_dejavu_fonts(pdf):
+    base_path = 'static/fonts/ttf'
+    try:
+        pdf.add_font('DejaVu', '', os.path.join(base_path, 'DejaVuSans.ttf'), uni=True)
+        pdf.add_font('DejaVu', 'B', os.path.join(base_path, 'DejaVuSans-Bold.ttf'), uni=True)
+        pdf.add_font('DejaVuMono', '', os.path.join(base_path, 'DejaVuSansMono.ttf'), uni=True)
+    except Exception as e:
+        print(f"⚠️ Error loading font: {e}")
+
 def generate_pdf_report(assignment_id, file_pairs, scores, texts):
-    """Generate PDF report for the assignment."""
-    upload_dir = current_app.config['UPLOAD_FOLDER']
+    """Generate Unicode-compatible PDF report for the assignment with grouped plagiarism results and truncated text."""
+    
+    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'results')
+    os.makedirs(upload_dir, exist_ok=True)
+    
     report_path = os.path.join(upload_dir, f"plagiarism_report_{assignment_id}.pdf")
 
-    pdf = FPDF()
+    # Custom PDF class for header
+    class PDFWithHeader(FPDF):
+        def header(self):
+            self.set_fill_color(0, 102, 204)  # Blue header
+            self.set_text_color(255, 255, 255)
+            self.set_font("DejaVu", "B", 14)
+            self.cell(0, 10, f"Plagiarism Detection Report - Assignment {assignment_id}", border=0, ln=1, align="C", fill=True)
+            self.ln(5)
+
+    pdf = PDFWithHeader()
+    register_all_dejavu_fonts(pdf)
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", style="B", size=16)
     pdf.add_page()
-    pdf.cell(200, 10, f"Plagiarism Report for Assignment {assignment_id}", ln=True, align='C')
-    pdf.ln(10)
-    
-    for (student1, student2), (cosine, jaccard, levenshtein) in zip(file_pairs, scores):
-        pdf.set_font("Arial", style="B", size=14)
-        pdf.cell(200, 10, f"{student1.username} vs {student2.username}", ln=True)
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, f"Cosine Similarity: {cosine}%", ln=True)
-        pdf.cell(200, 10, f"Jaccard Similarity: {jaccard}%", ln=True)
-        pdf.cell(200, 10, f"Levenshtein Similarity: {levenshtein}%", ln=True)
+
+    # Step 1: Prepare texts list and map student IDs to indices
+    student_ids = list(texts.keys())
+    texts_list = [texts[sid] for sid in student_ids]
+    student_id_to_index = {sid: idx for idx, sid in enumerate(student_ids)}
+
+    # Step 2: Group submissions by similarity
+    def find_plagiarism_groups(scores, file_pairs, threshold=10):
+        similarities = []
+        for (student1, student2), (cosine, jaccard, levenshtein) in zip(file_pairs, scores):
+            avg_similarity = (cosine + jaccard + levenshtein) / 3
+            if avg_similarity >= threshold:
+                idx1 = student_id_to_index[student1.id]
+                idx2 = student_id_to_index[student2.id]
+                words1, words2 = set(texts[student1.id].split()), set(texts[student2.id].split())
+                common_words = words1 & words2
+                similarities.append((idx1, idx2, avg_similarity, common_words))
+        
+        # Group texts with high similarity
+        groups = []
+        used = set()
+        for i, j, sim, common in similarities:
+            if i in used or j in used:
+                continue
+            group = {i, j}
+            used.update(group)
+            for k, l, sim2, _ in similarities:
+                if k in group or l in group:
+                    group.add(k)
+                    group.add(l)
+                    used.update({k, l})
+            groups.append((group, sim, common))
+        
+        return groups
+
+    groups = find_plagiarism_groups(scores, file_pairs, threshold=10)
+
+    # Step 3: Generate the report
+    pdf.set_font("DejaVu", "B", 12)
+    pdf.cell(0, 10, f"Summary of Plagiarism Findings ({len(texts_list)} Submissions)", ln=1)
+    pdf.ln(5)
+
+    if not groups:
+        pdf.set_font("DejaVu", "", 10)
+        pdf.cell(0, 10, "No significant plagiarism detected (similarity < 10%).", ln=1)
+    else:
+        pdf.set_font("DejaVu", "", 10)
+        pdf.cell(0, 10, f"Detected {len(groups)} groups of potential plagiarism:", ln=1)
         pdf.ln(5)
-        
-        words1, words2 = set(texts[student1.id].split()), set(texts[student2.id].split())
-        matched_words = words1 & words2
-        
-        pdf.set_font("Arial", style="B", size=12)
-        pdf.cell(200, 10, "Matched Words:", ln=True)
-        pdf.set_font("Arial", size=10)
-        pdf.multi_cell(0, 10, " ".join(matched_words))
-        pdf.ln(10)
-    
+
+        col_width = 90
+        gutter = 10
+        x_left = 10
+        x_right = x_left + col_width + gutter
+
+        def render_text(pdf, x, y, text, matched_words, col_width, title):
+            # Truncate text to 200 characters
+            max_chars = 200
+            if len(text) > max_chars:
+                text = text[:max_chars].rsplit(" ", 1)[0] + "..."
+
+            pdf.set_fill_color(240, 240, 240)  # Light gray background
+            pdf.set_xy(x, y)
+            line_height = 6
+            # Estimate lines based on truncated text
+            lines = sum(1 for i in range(0, len(text), 40))
+            box_height = lines * line_height + 20
+            if y + box_height > pdf.page_break_trigger:
+                pdf.add_page()
+                y = 20
+                pdf.set_xy(x, y)
+            pdf.rect(x, y, col_width, box_height, style="DF")
+
+            pdf.set_xy(x + 2, y + 2)
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.set_text_color(0, 0, 0)
+            pdf.cell(col_width - 4, 6, title, ln=1)
+
+            pdf.set_xy(x + 2, pdf.get_y())
+            words = text.split()
+            line_height = 6
+            current_y = pdf.get_y()
+            buffer = []
+
+            for i, word in enumerate(words):
+                is_matched = word.lower() in matched_words
+                pdf.set_fill_color(255, 204, 204) if is_matched else pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("DejaVu", "B" if is_matched else "", 9)
+                buffer.append((word, is_matched))
+                
+                if i == len(words) - 1 or pdf.get_string_width(" ".join(w[0] for w in buffer)) > col_width - 4:
+                    pdf.set_xy(x + 2, current_y)
+                    for w, matched in buffer:
+                        pdf.set_fill_color(255, 204, 204) if matched else pdf.set_fill_color(240, 240, 240)
+                        pdf.set_font("DejaVu", "B" if matched else "", 9)
+                        pdf.cell(pdf.get_string_width(w + " "), line_height, w + " ", fill=matched, ln=0)
+                    current_y += line_height
+                    if current_y > pdf.page_break_trigger:
+                        pdf.add_page()
+                        current_y = 20
+                        pdf.set_xy(x + 2, current_y)
+                    buffer = []
+
+            return current_y + line_height
+
+        for idx, (group, sim, common_words) in enumerate(groups, 1):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.cell(0, 8, f"Group {idx} (Similarity: {sim:.2f}%):", ln=1)
+            pdf.set_font("DejaVu", "", 9)
+            group_student_ids = [student_ids[i] for i in group]
+            student_names = [User.query.get(sid).username for sid in group_student_ids]
+            pdf.cell(0, 6, f"Students: {', '.join(student_names)}", ln=1)
+            pdf.cell(0, 6, f"Common Words: {', '.join(sorted(common_words))}", ln=1)
+            pdf.ln(5)
+
+            for i, doc_idx in enumerate(sorted(group)):
+                student_id = student_ids[doc_idx]
+                student_name = User.query.get(student_id).username
+                x_pos = x_left if i % 2 == 0 else x_right
+                y_top = pdf.get_y()
+                y_after = render_text(pdf, x_pos, y_top, texts[student_id], common_words, col_width, f"{student_name}")
+                if i % 2 == 1 or i == len(group) - 1:
+                    pdf.set_y(y_after + 10)
+
+    # Add a legend
+    pdf.ln(5)
+    pdf.set_font("DejaVu", "", 8)
+    pdf.set_fill_color(255, 204, 204)
+    pdf.cell(10, 5, "", fill=True, ln=0)
+    pdf.cell(5, 5, "", ln=0)
+    pdf.cell(0, 5, "Highlighted text indicates matching words", ln=1)
+
     pdf.output(report_path)
     return report_path
 
 def plot_similarity_scores(assignment_id, scores, file_pairs):
     """Plots the similarity scores."""
-    upload_dir = current_app.config['UPLOAD_FOLDER']
+    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'results')
+    os.makedirs(upload_dir, exist_ok=True)
+
     graph_path = os.path.join(upload_dir, f"plagiarism_graph_{assignment_id}.png")
 
     labels = [f"{student1.username} & {student2.username}" for student1, student2 in file_pairs]

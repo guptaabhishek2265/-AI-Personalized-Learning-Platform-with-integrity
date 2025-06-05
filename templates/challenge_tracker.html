@@ -1,0 +1,423 @@
+{% extends "base.html" %} {% block title %}Challenge Tracker{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+        >
+          <h4 class="mb-0">Challenge Tracker</h4>
+          <a
+            href="{{ url_for('main.dashboard_student') }}"
+            class="btn btn-light btn-sm"
+          >
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+        <div class="card-body">
+          <!-- Create New Challenge Section -->
+          <div class="create-challenge-section mb-4">
+            <h5 class="mb-3">Create New Challenge</h5>
+            <form id="challengeForm" class="needs-validation" novalidate>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="challengeName" class="form-label"
+                    >Challenge Name</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="challengeName"
+                    name="challengeName"
+                    required
+                    placeholder="e.g., Python Programming Challenge, Daily Coding Practice"
+                  />
+                  <div class="invalid-feedback">
+                    Please enter a challenge name
+                  </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="challengeDays" class="form-label"
+                    >Number of Days (max 30)</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="challengeDays"
+                    name="challengeDays"
+                    min="1"
+                    max="30"
+                    value="7"
+                    required
+                  />
+                  <div class="invalid-feedback">
+                    Please enter a number between 1 and 30
+                  </div>
+                </div>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Start Challenge
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Active Challenge Display -->
+          <div id="activeChallenge" class="mt-4" style="display: none">
+            <h5 class="mb-3">Your Active Challenge</h5>
+            <div class="challenge-card">
+              <div class="challenge-header">
+                <h5 id="challengeTitle" class="challenge-title"></h5>
+                <span class="badge badge-primary">Active</span>
+              </div>
+
+              <div class="progress challenge-progress">
+                <div
+                  id="challengeProgress"
+                  class="progress-bar"
+                  role="progressbar"
+                  style="width: 0%"
+                  aria-valuenow="0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  0%
+                </div>
+              </div>
+
+              <div id="challengeDays" class="challenge-days">
+                {% for day in challenge.days %}
+                <div class="day-container">
+                  <input type="checkbox" class="day-checkbox" id="day-{{ day.id
+                  }}" data-day="{{ day.day_number }}" data-challenge-id="{{
+                  challenge.id }}" {{ 'checked' if day.is_completed else '' }}
+                  {{ 'disabled' if day.day_number > ((now -
+                  challenge.start_date).days + 1) else '' }}>
+                  <label
+                    for="day-{{ day.id }}"
+                    class="day-label {{ 'today' if day.day_number == ((now - challenge.start_date).days + 1) else '' }} 
+                                          {{ 'completed' if day.is_completed else '' }} 
+                                          {{ 'future' if day.day_number > ((now - challenge.start_date).days + 1) else '' }}"
+                    title="Day {{ day.day_number }}{{ ' (Today)' if day.day_number == ((now - challenge.start_date).days + 1) else '' }}"
+                  >
+                    {{ day.day_number }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+
+              <div class="challenge-stats">
+                <div class="stat-item">
+                  <i class="fas fa-calendar-check"></i>
+                  <span
+                    >Days Completed: <span id="completedDays">0</span>/<span
+                      id="totalDays"
+                      >0</span
+                    ></span
+                  >
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-clock"></i>
+                  <span>Days Remaining: <span id="remainingDays">0</span></span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-chart-line"></i>
+                  <span>Progress: <span id="progressPercent">0</span>%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .challenge-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .challenge-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+
+  .challenge-progress {
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    margin: 15px 0;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+  }
+
+  .challenge-days {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .day-checkbox {
+    display: none;
+  }
+
+  .day-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+    position: relative;
+  }
+
+  .day-checkbox:checked + .day-label {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .day-label.today {
+    border-color: #007bff;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .day-label.future {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .day-label.completed {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .challenge-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-size: 0.9rem;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-item i {
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const challengeForm = document.getElementById("challengeForm");
+    const activeChallenge = document.getElementById("activeChallenge");
+    let currentChallenge = null;
+
+    // Handle challenge form submission
+    challengeForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      if (!this.checkValidity()) {
+        e.stopPropagation();
+        this.classList.add("was-validated");
+        return;
+      }
+
+      const name = document.getElementById("challengeName").value.trim();
+      const days = parseInt(document.getElementById("challengeDays").value);
+
+      if (!name || days < 1 || days > 30) {
+        alert("Please enter a valid challenge name and number of days (1-30)");
+        return;
+      }
+
+      try {
+        const response = await fetch("/student/create-challenge", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, days }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create challenge");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Store the challenge data
+          currentChallenge = {
+            id: data.challenge_id,
+            name: name,
+            totalDays: days,
+            completedDays: 0,
+          };
+
+          // Display the challenge
+          displayChallenge(currentChallenge);
+
+          // Reset the form
+          challengeForm.reset();
+          challengeForm.classList.remove("was-validated");
+
+          // Redirect to refresh the page
+          window.location.href = data.redirect_url;
+        } else {
+          alert(data.error || "Failed to create challenge");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to create challenge. Please try again.");
+      }
+    });
+
+    function displayChallenge(challenge) {
+      // Show the active challenge section
+      activeChallenge.style.display = "block";
+
+      // Update challenge title
+      document.getElementById("challengeTitle").textContent = challenge.name;
+      document.getElementById("totalDays").textContent = challenge.totalDays;
+      document.getElementById("completedDays").textContent = challenge.completedDays;
+      document.getElementById("remainingDays").textContent = challenge.totalDays - challenge.completedDays;
+
+      const progress = (challenge.completedDays / challenge.totalDays) * 100;
+      document.getElementById("progressPercent").textContent = Math.round(progress);
+      document.getElementById("challengeProgress").style.width = progress + "%";
+      document.getElementById("challengeProgress").setAttribute("aria-valuenow", progress);
+
+      // Generate day checkboxes
+      const daysContainer = document.getElementById("challengeDays");
+      const today = new Date().toISOString().split("T")[0];
+
+      let checkboxesHtml = "";
+      for (let i = 1; i <= challenge.totalDays; i++) {
+        const dayDate = new Date();
+        dayDate.setDate(dayDate.getDate() + i - 1);
+        const dayDateStr = dayDate.toISOString().split("T")[0];
+        const isToday = dayDateStr === today;
+        const isFuture = dayDateStr > today;
+
+        checkboxesHtml += `
+          <div class="day-container">
+            <input type="checkbox"
+                   class="day-checkbox"
+                   id="day-${i}"
+                   data-day="${i}"
+                   data-challenge-id="${challenge.id}"
+                   ${isFuture ? 'disabled' : ''}>
+            <label for="day-${i}"
+                   class="day-label ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}"
+                   title="Day ${i}${isToday ? ' (Today)' : ''}">
+              ${i}
+            </label>
+          </div>
+        `;
+      }
+      daysContainer.innerHTML = checkboxesHtml;
+
+      // Add event listeners for checkboxes
+      document.querySelectorAll(".day-checkbox").forEach((checkbox) => {
+        checkbox.addEventListener("change", handleDayCheckboxChange);
+      });
+    }
+
+    async function handleDayCheckboxChange(e) {
+      const checkbox = e.target;
+      if (checkbox.disabled) {
+        return;
+      }
+
+      const dayNumber = parseInt(checkbox.dataset.day);
+      const challengeId = checkbox.dataset.challengeId;
+
+      try {
+        const response = await fetch("/student/mark-challenge-day", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            challenge_id: challengeId,
+            day_number: dayNumber,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark day as completed");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Update the UI
+          const label = checkbox.nextElementSibling;
+          label.classList.add("completed");
+
+          // Update challenge stats
+          document.getElementById("completedDays").textContent = data.challenge.completed_days;
+          document.getElementById("remainingDays").textContent = data.challenge.remaining_days;
+          document.getElementById("progressPercent").textContent = Math.round(data.challenge.progress);
+          document.getElementById("challengeProgress").style.width = data.challenge.progress + "%";
+          document.getElementById("challengeProgress").setAttribute("aria-valuenow", data.challenge.progress);
+        } else {
+          checkbox.checked = !checkbox.checked; // Revert the checkbox
+          alert(data.error || "Failed to mark day as completed");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        checkbox.checked = !checkbox.checked; // Revert the checkbox
+        alert("Failed to mark day as completed. Please try again.");
+      }
+    }
+
+    // Initialize display if there's an active challenge
+    {% if challenge %}
+    currentChallenge = {
+      id: {{ challenge.id }},
+      name: "{{ challenge.name }}",
+      totalDays: {{ challenge.total_days }},
+      completedDays: {{ challenge.completed_days }}
+    };
+    displayChallenge(currentChallenge);
+    {% endif %}
+  });
+</script>
+{% endblock %}

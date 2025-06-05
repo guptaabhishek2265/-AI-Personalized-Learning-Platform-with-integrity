@@ -1,0 +1,289 @@
+{% extends "base.html" %} {% block title %}Challenge Details{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+        >
+          <h4 class="mb-0">Challenge Details</h4>
+          <a
+            href="{{ url_for('main.dashboard_student') }}"
+            class="btn btn-light btn-sm"
+          >
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+        <div class="card-body">
+          {% if challenge %}
+          <div class="challenge-details">
+            <div class="challenge-header mb-4">
+              <h3 class="challenge-title">{{ challenge.name }}</h3>
+              <span
+                class="badge {{ 'bg-success' if challenge.is_completed else 'bg-primary' }}"
+              >
+                {{ 'Completed' if challenge.is_completed else 'Active' }}
+              </span>
+            </div>
+
+            <div class="progress challenge-progress mb-4">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                style="width: {{ challenge.get_progress() }}%"
+                aria-valuenow="{{ challenge.get_progress() }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{ "%.1f"|format(challenge.get_progress()) }}%
+              </div>
+            </div>
+
+            <div class="challenge-info mb-4">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="info-card">
+                    <i class="fas fa-calendar-check"></i>
+                    <h5>Days Completed</h5>
+                    <p>
+                      {{ challenge.completed_days }}/{{ challenge.total_days }}
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="info-card">
+                    <i class="fas fa-clock"></i>
+                    <h5>Days Remaining</h5>
+                    <p>{{ challenge.get_remaining_days() }}</p>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="info-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h5>Challenge Period</h5>
+                    <p>
+                      {{ challenge.start_date.strftime('%Y-%m-%d') }} to {{
+                      challenge.end_date.strftime('%Y-%m-%d') }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="challenge-days-container">
+              <h4 class="mb-3">Daily Progress</h4>
+              <div class="challenge-days">
+                {% for day in challenge.days %}
+                <div class="day-container">
+                  <input type="checkbox" class="day-checkbox {{ 'future' if
+                  day.day_date > now else '' }}" id="day-{{ day.id }}"
+                  data-day="{{ day.day_number }}" data-challenge-id="{{
+                  challenge.id }}" {{ 'checked' if day.is_completed else '' }}
+                  {{ 'disabled' if day.day_date > now else '' }}>
+                  <label
+                    for="day-{{ day.id }}"
+                    class="day-label {{ 'today' if day.day_date == now.date() else '' }} 
+                                                          {{ 'completed' if day.is_completed else '' }} 
+                                                          {{ 'future' if day.day_date > now else '' }}"
+                    title="Day {{ day.day_number }}{{ ' (Today)' if day.day_date == now.date() else '' }}"
+                  >
+                    {{ day.day_number }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            Challenge not found.
+            <a href="{{ url_for('main.dashboard_student') }}"
+              >Return to dashboard</a
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .challenge-details {
+    padding: 20px;
+  }
+
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .challenge-title {
+    color: #2c3e50;
+    margin: 0;
+  }
+
+  .challenge-progress {
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+  }
+
+  .info-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 100%;
+  }
+
+  .info-card i {
+    font-size: 2rem;
+    color: #4caf50;
+    margin-bottom: 10px;
+  }
+
+  .info-card h5 {
+    color: #2c3e50;
+    margin: 10px 0;
+    font-size: 1.1rem;
+  }
+
+  .info-card p {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .challenge-days-container {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .challenge-days {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+  }
+
+  .day-container {
+    position: relative;
+  }
+
+  .day-checkbox {
+    display: none;
+  }
+
+  .day-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  .day-checkbox:checked + .day-label {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .day-label.today {
+    border-color: #007bff;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .day-label.future {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .day-label.completed {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .day-label:hover:not(.future) {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Handle checkbox changes
+    document
+      .querySelectorAll(".day-checkbox:not(.future)")
+      .forEach((checkbox) => {
+        checkbox.addEventListener("change", async function (e) {
+          if (this.disabled || this.classList.contains("future")) {
+            return;
+          }
+
+          const challengeId = this.dataset.challengeId;
+          const dayNumber = parseInt(this.dataset.day);
+
+          try {
+            const response = await fetch("/student/mark-challenge-day", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                challenge_id: challengeId,
+                day_number: dayNumber,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to mark day as completed");
+            }
+
+            const data = await response.json();
+            if (data.success) {
+              // Update the UI
+              const label = this.nextElementSibling;
+              label.classList.add("completed");
+
+              // Reload the page to update all stats
+              window.location.reload();
+            } else {
+              this.checked = !this.checked; // Revert the checkbox
+              alert(data.error || "Failed to mark day as completed");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            this.checked = !this.checked; // Revert the checkbox
+            alert("Failed to mark day as completed. Please try again.");
+          }
+        });
+      });
+  });
+</script>
+{% endblock %}

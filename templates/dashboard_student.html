@@ -1,88 +1,516 @@
-{% extends "base.html" %}
-
-{% block title %}Student Dashboard{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col">
-        <h2>Student Dashboard</h2>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">Available Assignments</h4>
-            </div>
-            <div class="card-body">
-                {% if assignments %}
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Description</th>
-                                    <th>Due Date (IST)</th>
-                                    <th>Status</th>
-                                    <th>File</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assignment in assignments %}
-                                <tr>
-                                    <td>{{ assignment.title }}</td>
-                                    <td>{{ assignment.description }}</td>
-                                    <td>{{ assignment.due_date.strftime('%Y-%m-%d %H:%M IST') }}</td>
-                                    <td>
-                                        {% if assignment.id in submissions %}
-                                            <span class="badge bg-success">Submitted</span>
-                                        {% elif assignment.due_date < now %}
-                                            <span class="badge bg-danger">Overdue</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if assignment.file_path %}
-                                            <div class="btn-group">
-                                                <a href="{{ url_for('preview_assignment', assignment_id=assignment.id) }}" 
-                                                   class="btn btn-sm btn-primary" target="_blank">
-                                                    <i data-feather="eye"></i> View
-                                                </a>
-                                                <a href="{{ url_for('download_assignment_file', assignment_id=assignment.id) }}" 
-                                                   class="btn btn-sm btn-info">
-                                                    <i data-feather="download"></i> Download
-                                                </a>
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted">No file</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if assignment.id not in submissions and assignment.due_date > now %}
-                                            <form method="POST" action="{{ url_for('submit_assignment', assignment_id=assignment.id) }}" 
-                                                  enctype="multipart/form-data" class="d-inline">
-                                                <div class="input-group">
-                                                    <input type="file" class="form-control form-control-sm" aria-label="NA" name="file" required>
-                                                    <button type="submit" class="btn btn-sm btn-primary">
-                                                        <i data-feather="upload"></i> Submit
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="text-muted">No assignments available.</p>
-                {% endif %}
-            </div>
+{% extends "base.html" %} {% block title %}Student Dashboard{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Student Dashboard</h4>
         </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Existing buttons -->
+            <div class="col-md-3 mb-3">
+              <a
+                href="{{ url_for('main.view_attendance') }}"
+                class="btn btn-info btn-block"
+              >
+                <i class="fas fa-calendar-check"></i> View Attendance
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a
+                href="{{ url_for('main.mark_attendance') }}"
+                class="btn btn-success btn-block"
+              >
+                <i class="fas fa-user-check"></i> Mark Attendance
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a
+                href="{{ url_for('main.add_subject') }}"
+                class="btn btn-warning btn-block"
+              >
+                <i class="fas fa-book"></i> Add Subject
+              </a>
+            </div>
+            <div class="col-md-3 mb-3">
+              <a
+                href="{{ url_for('main.student_chatbot') }}"
+                class="btn btn-secondary btn-block"
+              >
+                <i class="fas fa-robot"></i> AI Assistant
+              </a>
+            </div>
+            <!-- Add this button in the row of buttons -->
+            <div class="col-md-3 mb-3">
+              <a
+                href="{{ url_for('main.challenge_tracker') }}"
+                class="btn btn-info btn-block"
+              >
+                <i class="fas fa-trophy"></i> Challenge Tracker
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Rest of your dashboard content -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Available Assignments</h4>
+        </div>
+        <div class="card-body">
+          {% if assignments %}
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Description</th>
+                  <th>Due Date (IST)</th>
+                  <th>Status</th>
+                  <th>File</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                  <td>{{ assignment.title }}</td>
+                  <td>{{ assignment.description }}</td>
+                  <td>
+                    {{ assignment.due_date.strftime('%Y-%m-%d %H:%M IST') }}
+                  </td>
+                  <td>
+                    {% if assignment.id in submissions %}
+                    <span class="badge bg-success">Submitted</span>
+                    {% elif assignment.due_date < now %}
+                    <span class="badge bg-danger">Overdue</span>
+                    {% else %}
+                    <span class="badge bg-warning">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if assignment.file_path %}
+                    <div class="btn-group">
+                      <a
+                        href="{{ url_for('main.preview_assignment', assignment_id=assignment.id) }}"
+                        class="btn btn-sm btn-primary"
+                        target="_blank"
+                      >
+                        <i data-feather="eye"></i> View
+                      </a>
+                      <a
+                        href="{{ url_for('main.download_assignment_file', assignment_id=assignment.id) }}"
+                        class="btn btn-sm btn-info"
+                      >
+                        <i data-feather="download"></i> Download
+                      </a>
+                    </div>
+                    {% else %}
+                    <span class="text-muted">No file</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if assignment.id not in submissions and
+                    assignment.due_date > now %}
+                    <form
+                      method="POST"
+                      action="{{ url_for('main.submit_assignment', assignment_id=assignment.id) }}"
+                      enctype="multipart/form-data"
+                      class="d-inline"
+                    >
+                      <div class="input-group">
+                        <input
+                          type="file"
+                          class="form-control form-control-sm"
+                          aria-label="NA"
+                          name="file"
+                          required
+                        />
+                        <button type="submit" class="btn btn-sm btn-primary">
+                          <i data-feather="upload"></i> Submit
+                        </button>
+                      </div>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted">No assignments available.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+  .quiz-question {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .quiz-options {
+    margin-left: 20px;
+  }
+
+  .quiz-answer {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .quiz-explanation {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .quiz-summary {
+    background-color: #fff3e0;
+    border-left: 4px solid #ff9800;
+    padding: 15px;
+    margin-top: 20px;
+  }
+
+  .challenge-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .challenge-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+
+  .challenge-progress {
+    height: 10px;
+    margin: 15px 0;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+  }
+
+  .challenge-days {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+
+  .day-checkbox {
+    display: none;
+  }
+
+  .day-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+    position: relative;
+  }
+
+  .day-checkbox:checked + .day-label {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .day-label.today {
+    border-color: #007bff;
+    font-weight: bold;
+  }
+
+  .day-label.future {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .day-label.completed {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+  }
+
+  .challenge-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    font-size: 0.9rem;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-item i {
+    color: #6c757d;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const challengeForm = document.getElementById("challengeForm");
+    const challengesList = document.getElementById("challengesList");
+
+    // Load active challenges when modal opens
+    $("#challengeModal").on("show.bs.modal", function () {
+      loadActiveChallenges();
+    });
+
+    // Handle challenge form submission
+    challengeForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("challengeName").value.trim();
+      const days = parseInt(document.getElementById("challengeDays").value);
+
+      if (!name || days < 1 || days > 30) {
+        alert("Please enter a valid challenge name and number of days (1-30)");
+        return;
+      }
+
+      try {
+        const response = await fetch("/student/create-challenge", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, days }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create challenge");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Close the modal
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("challengeModal")
+          );
+          modal.hide();
+
+          // Redirect to the challenge view page
+          window.location.href = data.redirect_url;
+        } else {
+          alert(data.error || "Failed to create challenge");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to create challenge. Please try again.");
+      }
+    });
+
+    // Function to load active challenges
+    async function loadActiveChallenges() {
+      try {
+        const response = await fetch("/student/active-challenges");
+        if (!response.ok) {
+          throw new Error("Failed to load challenges");
+        }
+
+        const challenges = await response.json();
+        displayChallenges(challenges);
+      } catch (error) {
+        console.error("Error:", error);
+        challengesList.innerHTML =
+          '<div class="alert alert-danger">Failed to load challenges</div>';
+      }
+    }
+
+    // Function to display challenges
+    function displayChallenges(challenges) {
+      if (!challenges.length) {
+        challengesList.innerHTML =
+          '<div class="alert alert-info">No active challenges. Create one to get started!</div>';
+        return;
+      }
+
+      challengesList.innerHTML = challenges
+        .map(
+          (challenge) => `
+        <div class="challenge-card" data-challenge-id="${challenge.id}">
+          <div class="challenge-header">
+            <h5 class="challenge-title">${challenge.name}</h5>
+            <span class="badge ${
+              challenge.is_completed ? "bg-success" : "bg-primary"
+            }">
+              ${challenge.is_completed ? "Completed" : "Active"}
+            </span>
+          </div>
+          
+          <div class="progress challenge-progress">
+            <div class="progress-bar" role="progressbar" 
+                 style="width: ${challenge.progress}%" 
+                 aria-valuenow="${challenge.progress}" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100">
+            </div>
+          </div>
+
+          <div class="challenge-days">
+            ${generateDayCheckboxes(challenge)}
+          </div>
+
+          <div class="challenge-stats">
+            <div class="stat-item">
+              <i class="fas fa-calendar-check"></i>
+              <span>Days Completed: ${challenge.completed_days}/${
+            challenge.total_days
+          }</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-clock"></i>
+              <span>Days Remaining: ${challenge.remaining_days}</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-chart-line"></i>
+              <span>Progress: ${Math.round(challenge.progress)}%</span>
+            </div>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+
+      // Add event listeners for checkboxes
+      document
+        .querySelectorAll(".day-checkbox:not(.future)")
+        .forEach((checkbox) => {
+          checkbox.addEventListener("change", handleDayCheckboxChange);
+        });
+    }
+
+    // Function to generate day checkboxes
+    function generateDayCheckboxes(challenge) {
+      const today = new Date().toISOString().split("T")[0];
+      const startDate = new Date(challenge.start_date)
+        .toISOString()
+        .split("T")[0];
+
+      let checkboxes = "";
+      for (let i = 1; i <= challenge.total_days; i++) {
+        const dayDate = new Date(startDate);
+        dayDate.setDate(dayDate.getDate() + i - 1);
+        const dayDateStr = dayDate.toISOString().split("T")[0];
+
+        const isCompleted = challenge.days[i - 1]?.is_completed;
+        const isToday = dayDateStr === today;
+        const isFuture = dayDateStr > today;
+
+        checkboxes += `
+          <div class="day-container">
+            <input type="checkbox" 
+                   class="day-checkbox ${isFuture ? "future" : ""}" 
+                   id="day-${challenge.id}-${i}"
+                   data-day="${i}"
+                   data-challenge-id="${challenge.id}"
+                   ${isCompleted ? "checked" : ""}
+                   ${isFuture ? "disabled" : ""}>
+            <label for="day-${challenge.id}-${i}" 
+                   class="day-label ${isToday ? "today" : ""} ${
+          isCompleted ? "completed" : ""
+        } ${isFuture ? "future" : ""}"
+                   title="Day ${i}${isToday ? " (Today)" : ""}">
+              ${i}
+            </label>
+          </div>
+        `;
+      }
+      return checkboxes;
+    }
+
+    // Function to handle day checkbox changes
+    async function handleDayCheckboxChange(e) {
+      const checkbox = e.target;
+      if (checkbox.disabled || checkbox.classList.contains("future")) {
+        return;
+      }
+
+      const challengeId = checkbox.dataset.challengeId;
+      const dayNumber = parseInt(checkbox.dataset.day);
+
+      try {
+        const response = await fetch("/student/mark-challenge-day", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            challenge_id: challengeId,
+            day_number: dayNumber,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark day as completed");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Update the UI
+          const label = checkbox.nextElementSibling;
+          label.classList.add("completed");
+          loadActiveChallenges(); // Reload to update progress
+        } else {
+          checkbox.checked = !checkbox.checked; // Revert the checkbox
+          alert(data.error || "Failed to mark day as completed");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        checkbox.checked = !checkbox.checked; // Revert the checkbox
+        alert("Failed to mark day as completed. Please try again.");
+      }
+    }
+  });
+</script>
 {% endblock %}
